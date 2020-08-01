@@ -1,0 +1,28 @@
+About the Igame
+---------------
+RULES OF THE GAME
+-----------------
+1.The idea of this game is that  a user chooses a player from a preloaded list.
+Any players other than those from the list will not be legible for playing
+2. Users are required to guess the next number from a shuffle of numbers between 1 and 36 inclusive. Besides users can just guess that the next number will be ODD or EVEN.
+Therefore the choices are an integer  from 1...36 OR EVEN OR ODD
+3. A player can play as many times as he can, as long as he does not repsond by Q. Q, will end the game and start shuffling integers producing results in every 30 seconds
+
+Sample Output
+---------------
+
+-----------------------------------
+... Round Number70 ...
+
+Player              Bet                 Outcome             Winnings            
+simbarashe          even                WIN                 13.0                
+jane                odd                 WIN                 10.0                
+simbarashe          4                   LOSE                0.0                 
+
+-----------------------------------
+
+4. This game is played via the console
+
+
+Enjoy.
+
