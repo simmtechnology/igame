@@ -1,0 +1,35 @@
+API Test
+--------
+Springboot application.
+Exctract zipped files and configure the application on your local machine
+When you run this application you can test the API as follows
+(a)/conversions/ktoc
+The ktoc endpoint, take the amount in kelvin , as path parameter. It returns the amount in celcius as jason response
+example of input :
+http://localhost:8099/devtest/conversions/ktoc/362.15 
+
+output :
+{"units":"Celcius","value":89}
+
+(b) /conversions/ctok
+The ktoc endpoint, take the amount in celcius , as path parameter. It returns the amount in kelvin as jason response
+example of input :
+http://localhost:8099/devtest/conversions/ctok/89 
+
+output :
+{"units":"kelvin","value":362.15}
+.
+(c)/conversions/mtok
+The mtok endpoint, take the distance in miles , as path parameter. It returns the distance in kilometers as jason response
+example of input :
+http://localhost:8099/devtest/conversions/mtok/100
+
+output :
+{"units":"km","value":160.9344}
+(d)/conversions/ktom
+The mtok endpoint, take the distance in kilometers , as path parameter. It returns the distance in miles as jason response
+example of input :
+http://localhost:8099/devtest/conversions/ktom/80
+
+output :
+{"units":"miles","value":49.709695378986716
