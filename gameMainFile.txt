@@ -1,0 +1,266 @@
+/*
+Written by Musharu Simbarashe, simmtechnology@gmail.com, +263773904872
+This is a game for betting on an integer between 0 and 36, OR EVEN or ODD number between 0 and 36.
+Choosing from preloaded places, you declare player , number to ben on , and amount to put on the table
+From there you let the ball roll!!!!!!
+*/
+
+package za.test.game;
+
+import java.io.BufferedReader;
+import java.io.Console;
+import java.io.File;
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.core.io.ClassPathResource;
+
+@SpringBootApplication
+public class MygameApplication implements CommandLineRunner {
+
+	private static Logger LOG = LoggerFactory.getLogger(MygameApplication.class);
+	public static int shuffleNumber = 1;
+	Console console = System.console();
+	// lets store our players
+	ArrayList<String> players = new ArrayList();
+	static ArrayList<Bet> legalBets = new ArrayList();
+
+	public static void main(String[] args) {
+
+		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+		SpringApplication.run(MygameApplication.class, args);
+
+		// get list of players from the file
+		Runnable periodicTask = new Runnable() {
+			public void run() {
+				tossTheDiceAndAwardResults();
+			}
+		};
+		executor.scheduleAtFixedRate(periodicTask, 0, 30, TimeUnit.SECONDS);
+		LOG.info("APPLICATION FINISHED");
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+
+		// read list of players from a text file in the resources folder : players.txt
+
+		// satisfy the requirement(a)On start-up, load a file which contains a list of
+		// player's names:
+
+		File resource = new ClassPathResource("data/players.txt").getFile();
+		Scanner scanner = new Scanner(resource);
+
+		// bet comprise of player, bet number and amount
+
+		while (scanner.hasNextLine()) {
+			// every line in the text file is a name of player
+			String player = scanner.nextLine();
+			// check display name of the player :
+			players.add(player);
+		}
+
+		// Start round one
+		LOG.info("FIRST ROUND OF BETTING HAS STARTED");
+		displayPlayers();
+		String[] params = getBetDetails();
+
+	}
+
+	private static void tossTheDiceAndAwardResults() {
+
+		int winNumber = tossCoin();
+		int count = 0;
+		//Output Formatting. fix the presentation of results by formatting.
+		//headers
+		String title1 = String.format("%1$-20s", "Player");
+		String title2 = String.format("%1$-20s", "Bet");
+		String title3 = String.format("%1$-20s", "Outcome");
+		String title4 = String.format("%1$-20s", "Winnings");
+		System.out.println("... Round Number" + shuffleNumber + " ...\n");
+
+		StringBuilder strb = new StringBuilder(title1 + title2 + title3 + title4 + "\n");
+
+		for (Bet mybet : legalBets) {
+			count++;
+			String betStr = mybet.getBetNumber();
+			double winnings = 0.0;
+			String resultStr = "LOSE";
+			if (betStr.toUpperCase().compareTo("EVEN") == 0 || betStr.toUpperCase().compareTo("ODD") == 0) {
+				int test = winNumber % 2;
+				if (test == 0) {
+					winnings = mybet.getBetAmount() * 2;
+					resultStr = "WIN";
+				}
+			} else {
+				int myGuess = Integer.parseInt(betStr);
+				if (myGuess == winNumber) {
+					winnings = mybet.getBetAmount() * 36;
+					resultStr = "WIN";
+				}
+
+			}
+			//format the details rows of each reasult
+			String player = String.format("%1$-20s", mybet.getPlayer());
+			String bett = String.format("%1$-20s", betStr);
+			String result = String.format("%1$-20s", resultStr);
+			String myWinnings = String.format("%1$-20s", winnings);
+			strb.append(player + bett + result + myWinnings + "\n");
+		}
+
+		System.out.println(strb);
+		System.out.println("-----------------------------------");
+		shuffleNumber++;
+
+	}
+
+	public static int tossCoin() {
+		//the coin is tossed high, and see whats integer does it land on
+		//return the number
+		Random rand = new Random();
+		int randomNum = rand.nextInt(37);
+		return randomNum;
+	}
+
+	private String[] getBetDetails() {
+		Scanner scanner2 = new Scanner(System.in);
+		String myBet = null;
+		String retry = "Q";
+		String[] userInput = { "", "", "" };
+		do {
+			System.out.println("What is your bet?, Player Number Amount, OR enter Q to quit");
+			if (scanner2.hasNext()) {
+				myBet = scanner2.nextLine();
+				// check the input
+				String[] params = myBet.split(" ");
+				if (params.length != 3) {
+					System.out.println("");
+					retry = myBet;
+					if (params[0].toUpperCase().compareTo("Q") == 0) {
+						// user has opted to quit
+						retry = "Q";
+					} else {
+						// redisplay the players
+
+						displayPlayers();
+
+					}
+				} else {
+					// ensure that the second param is either a number between 0 and 36 or Text EVEN
+					// or ODD
+
+					String bet = params[1];
+					boolean betEvenOdd = betChoiceIsEvenOrOdd(bet);
+					boolean betIsValidNumeric = betChoiceIsNumericAndWithinRange(bet);
+					if (!(betEvenOdd || betChoiceIsNumericAndWithinRange(bet))) {
+						System.out.println("Bet Number should be between 1 and 36 inclusive OR either EVEN or ODD");
+					}
+
+					// check if the player chose is valid
+					boolean playerIsValid = playerNameIsValid(params[0]);
+					if (!playerIsValid) {
+						System.out.println("Please choose a player from the list provided");
+					}
+					boolean amountIsValid = betAmountIsValid(params[2]);
+					if (!amountIsValid) {
+						System.out.println("You have provided an invalid Bet Amount");
+					}
+
+					if ((betEvenOdd || betChoiceIsNumericAndWithinRange(bet)) && playerIsValid && amountIsValid) {
+						// add bet to the list
+						Bet currentBet = new Bet();
+						currentBet.setBetAmount(Double.parseDouble(params[2]));
+						currentBet.setPlayer(params[0]);
+						currentBet.setBetNumber(params[1]);
+						legalBets.add(currentBet);
+
+					}
+
+					userInput = params;
+					retry = myBet;// once we get input leave prompt
+				}
+
+			}
+
+		} while (retry.toUpperCase().compareTo("Q") != 0);
+
+		return userInput;
+	}
+
+	public void displayPlayers() {
+		System.out.println("--- Here are the list of legal players. Use any name of from this list  ---");
+		System.out.println("--- *************  ---");
+		int count = 0;
+		for (String player : players) {
+			count++;
+			System.out.println(count + "." + player);
+		}
+		System.out.println("--- *************  ---");
+		System.out.println("Bet Number should be between 1 and 36 inclusive OR either EVEN or ODD");
+		System.out.println("--- *************  ---");
+	}
+
+	private boolean betChoiceIsEvenOrOdd(String bet) {
+		if (bet.toUpperCase().compareTo("EVEN") == 0 || bet.toUpperCase().compareTo("ODD") == 0) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean betAmountIsValid(String bet) {
+		try {
+			Double betNumber = Double.parseDouble(bet);
+			return true;
+		} catch (NumberFormatException ex) {
+			return false;
+		}
+
+	}
+
+	private boolean betChoiceIsNumericAndWithinRange(String bet) {
+		try {
+			int betNumber = Integer.parseInt(bet);
+			if (betNumber > 0 && betNumber < 37)// check range
+			{
+				return true;
+			}
+			return false; // number is not within range
+		} catch (NumberFormatException ex) {
+			return false;// bet is not number
+		}
+
+	}
+
+	private boolean playerNameIsValid(String name) {
+
+		// we are checking if the name of player supplied is among the legitimate
+		// players.
+		// it should work even if a name of player is duplicated;
+		boolean isValid = false;
+		int count = 0;
+		for (String player : players) {
+			if (player.toUpperCase().compareTo(name.toUpperCase()) == 0) {
+				count++;
+			}
+
+		}
+		if (count > 0) {
+			isValid = true;
+		}
+		return isValid;
+
+	}
+
+}
